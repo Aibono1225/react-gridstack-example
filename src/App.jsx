@@ -6,7 +6,6 @@ import routes from './router/index'
 function App() {
   // const GetRoutes = () => useRoutes(routes)
   const element = useRoutes(routes)
-
   return (
     <>
     {element}
