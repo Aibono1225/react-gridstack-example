@@ -1,63 +1,125 @@
-import React, { useState, useEffect, createRef, useRef } from 'react';
-import { GridStack } from 'gridstack';
-import 'gridstack/dist/gridstack.min.css';
-import './demo.css'
+import React, { useState, useRef, useEffect, createRef } from "react";
+import { GridStack } from "gridstack";
+import A from "./components/A";
+import B from "./components/B";
+import C from "./components/C";
 
-const Item = ({ id }) => <div>{id}</div>
-const ControlledStack = ({ items, addItem }) => {
-    const refs = useRef({})
-    const gridRef = useRef()
+const COMPONENTS = {
+  A: <A />,
+  B: <B />,
+  C: <C />,
+};
 
-    if (Object.keys(refs.current).length !== items.length) {
-      items.forEach(({ id }) => {
-        refs.current[id] = refs.current[id] || createRef()
-      })
-    }
-
-    useEffect(() => {
-      gridRef.current = gridRef.current ||
-        GridStack.init({float: true}, '.controlled')
-      const grid = gridRef.current
-      grid.batchUpdate()
-      grid.removeAll(false)
-      items.forEach(({ id }) => grid.makeWidget(refs.current[id].current))
-      grid.batchUpdate(false)
-    }, [items])
-
-    return (
-      <div>
-        <button onClick={addItem}>Add new widget</button>
-        <div className={`grid-stack controlled`}>
-          {items.map((item, i) => {
-            return (
-              <div ref={refs.current[item.id]} key={item.id} className={'grid-stack-item'}>
-                <div className="grid-stack-item-content">
-                  <Item {...item} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
-  const ControlledExample = () => {
-    const [items, setItems] = useState([{ id: 'item-1' }, { id: 'item-2' }])
-    return (
-      <ControlledStack
-        items={items}
-        addItem={() => setItems([...items, { id: `item-${items.length + 1}` }])}
-      />
-    )
-  }
+const ComponentList = ({ onAddComponent }) => {
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Component Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.keys(COMPONENTS).map((key) => (
+          <tr key={key}>
+            <td>
+              <button onClick={() => onAddComponent(key)}>{key}</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 
 const Demo = () => {
+  const [components, setComponents] = useState([]);
+  const refs = useRef({});
+  const gridRef = useRef();
+
+  if (Object.keys(refs.current).length !== components.length) {
+    components.forEach(({ id }) => {
+      console.log("/s", id);
+      refs.current[id] = refs.current[id] || createRef();
+    });
+  }
+
+  let options1 = {
+    // column: 6,
+    minRow: 1, // don't collapse when empty
+    // cellHeight: 700,
+    float: true,
+    dragOut: true,
+    // itemclassName: 'with-lines', // test a custom additional className #2110
+    acceptWidgets: function (el) {
+      return true;
+    }, // function example, but can also be: true | false | '.someclassName' value
+  };
+
+  const handleAddComponent = (componentKey) => {
+    const newComponent = {
+      id: componentKey + components.length,
+      key: componentKey,
+      x: 0,
+      y: 0,
+      w: 4,
+      h: 2,
+    };
+    setComponents([...components, newComponent]);
+  };
+
+  useEffect(() => {
+    if (!gridRef.current) {
+      gridRef.current = GridStack.init(options1, "#grid1");
+
+      // Add event listener for change
+      gridRef.current.on("change", function (event, items) {
+        console.log("Changed items:", items);
+
+        items.forEach((item) => {
+          const { x, y, w, h } = item;
+          console.log("??", item);
+          console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
+        });
+
+        const allItems = gridRef.current.engine.nodes.map((node) => ({
+          x: node.x,
+          y: node.y,
+          w: node.w,
+          h: node.h,
+        }));
+        console.log("All items:", allItems);
+      });
+    }
+
+    const grid = gridRef.current;
+    grid.batchUpdate();
+    grid.removeAll(false);
+    components.forEach(({ id }) => grid.makeWidget(refs.current[id].current));
+    grid.batchUpdate(false);
+  }, [components]);
 
   return (
     <div>
-      <h2>Demo页</h2>
-      <ControlledExample />
+      <ComponentList onAddComponent={handleAddComponent} />
+      <div style={{ marginTop: "20px" }}>
+        <div className={`grid-stack controlled`} id="grid1">
+          {components.map((comp) => (
+            <div
+              key={comp.id}
+              data-gs-x={comp.x}
+              data-gs-y={comp.y}
+              data-gs-width={comp.w}
+              data-gs-height={comp.h}
+              ref={refs.current[comp.id]}
+              className={"grid-stack-item"}
+            >
+              <div className="grid-stack-item-content">
+                {COMPONENTS[comp.key]}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
