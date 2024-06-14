@@ -4,11 +4,14 @@ import { Button } from "antd";
 import A from "./components/A";
 import B from "./components/B";
 import C from "./components/C";
+import Table from "./components/table";
+import "./demo.css";
 
 const COMPONENTS = {
   A: <A />,
   B: <B />,
   C: <C />,
+  Table: <Table />,
 };
 
 const ComponentList = ({ onAddComponent }) => {

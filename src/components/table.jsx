@@ -1,29 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React from "react";
+import "../table.css";
 
 const Table = () => {
+  const data = [
+    { Name: "John Doe", Age: 28, Country: "USA" },
+    { Name: "Anna Smith", Age: 24, Country: "UK" },
+    { Name: "Peter Johnson", Age: 30, Country: "Canada" },
+  ];
   return (
-    <div id="jjj">
-      <table>
-  <thead>
-    <tr>
-      <th>列标题1</th>
-      <th>列标题2</th>
-      <th>列标题3</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>行1，列1</td>
-      <td>行1，列2</td>
-      <td>行1，列3</td>
-    </tr>
-    <tr>
-      <td>行2，列1</td>
-      <td>行2，列2</td>
-      <td>行2，列3</td>
-    </tr>
-  </tbody>
-</table>
+    <div className="table-container">
+      <table className="styled-table">
+        <thead>
+          <tr>
+            {Object.keys(data[0]).map((key) => (
+              <th key={key}>{key}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, index) => (
+            <tr key={index} className={index % 2 === 0 ? "even" : "odd"}>
+              {Object.values(row).map((cell, i) => (
+                <td key={i}>{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

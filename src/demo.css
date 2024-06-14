@@ -23,7 +23,7 @@ h1 {
 
 .grid-stack {
   background: #FAFAD2;
-  height: 300px !important;
+  /* height: 300px !important; */
 }
 
 .grid-stack-item-content {
