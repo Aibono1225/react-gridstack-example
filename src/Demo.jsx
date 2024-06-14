@@ -46,8 +46,7 @@ const Demo = () => {
 
   let options1 = {
     // column: 6,
-    minRow: 1, // don't collapse when empty
-    // cellHeight: 700,
+    minRow: 3, // don't collapse when empty
     float: true,
     dragOut: true,
     // itemclassName: 'with-lines', // test a custom additional className #2110
@@ -89,21 +88,30 @@ const Demo = () => {
       gridRef.current = GridStack.init(options1, "#grid1");
 
       // Add event listener for change
-      gridRef.current.on("change", function (event, items) {
-        items.forEach((item) => {
-          const { x, y, w, h } = item;
-          console.log("??", item);
-          console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
-        });
+      gridRef.current
+        .on("change", function (event, items) {
+          items.forEach((item) => {
+            const { x, y, w, h } = item;
+            console.log("??", item);
+            console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
+          });
 
-        const allItems = gridRef.current.engine.nodes.map((node) => ({
-          x: node.x,
-          y: node.y,
-          w: node.w,
-          h: node.h,
-        }));
-        console.log("All items:", allItems);
-      });
+          const allItems = gridRef.current.engine.nodes.map((node) => ({
+            x: node.x,
+            y: node.y,
+            w: node.w,
+            h: node.h,
+          }));
+          console.log("All items:", allItems);
+        })
+        .on("resize", function (event, el) {
+          const node = el.gridstackNode;
+          if (node) {
+            const aspectRatio = 1;
+            const newHeight = Math.round(node.w / aspectRatio);
+            gridRef.current.update(el, { h: newHeight });
+          }
+        });
     }
 
     const grid = gridRef.current;
