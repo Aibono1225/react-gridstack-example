@@ -42,16 +42,17 @@ const Demo = () => {
 
   if (Object.keys(refs.current).length !== components.length) {
     components.forEach(({ id }) => {
-      console.log("/s", id);
       refs.current[id] = refs.current[id] || createRef();
     });
   }
 
   let options1 = {
     // column: 6,
-    minRow: 3, // don't collapse when empty
+    minRow: 1, // don't collapse when empty
     float: true,
     dragOut: true,
+    autoPosition: true,
+    sizeToContent: true,
     // itemclassName: 'with-lines', // test a custom additional className #2110
     acceptWidgets: function (el) {
       return true;
@@ -64,8 +65,8 @@ const Demo = () => {
       key: componentKey,
       x: 0,
       y: 0,
-      w: 4,
-      h: 2,
+      w: 1,
+      h: 1,
     };
     setComponents([...components, newComponent]);
   };
@@ -83,6 +84,7 @@ const Demo = () => {
       const grid = gridRef.current;
       grid.load(savedLayout);
       console.log("??", savedLayout);
+      grid.batchUpdate();
     }
   }, []);
 
@@ -90,39 +92,38 @@ const Demo = () => {
     if (!gridRef.current) {
       gridRef.current = GridStack.init(options1, "#grid1");
 
-      // Add event listener for change
-      gridRef.current
-        .on("change", function (event, items) {
-          items.forEach((item) => {
-            const { x, y, w, h } = item;
-            console.log("??", item);
-            console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
-          });
-
-          const allItems = gridRef.current.engine.nodes.map((node) => ({
-            x: node.x,
-            y: node.y,
-            w: node.w,
-            h: node.h,
-          }));
-          console.log("All items:", allItems);
-        })
-        .on("resize", function (event, el) {
-          const node = el.gridstackNode;
-          if (node) {
-            const aspectRatio = 1;
-            const newHeight = Math.round(node.w / aspectRatio);
-            gridRef.current.update(el, { h: newHeight });
-          }
+      gridRef.current.on("change", function (event, items) {
+        items.forEach((item) => {
+          const { x, y, w, h } = item;
+          console.log("??", item);
+          console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
         });
+
+        const allItems = gridRef.current.engine.nodes.map((node) => ({
+          x: node.x,
+          y: node.y,
+          w: node.w,
+          h: node.h,
+        }));
+        console.log("All items:", allItems);
+      });
+      // .on("resize", function (event, el) {
+      //   const node = el.gridstackNode;
+      //   if (node) {
+      //     const aspectRatio = 1;
+      //     // const aspectRatio = node.el.getAttribute("ratio");
+      //     const newHeight = Math.round(node.w / aspectRatio);
+      //     gridRef.current.update(el, { h: newHeight });
+      //   }
+      // });
     }
 
     const grid = gridRef.current;
     grid.batchUpdate();
+    grid.margin(2);
     grid.removeAll(false);
     components.forEach(({ id }) => {
       const element = refs.current[id].current;
-      console.log("每个", element);
       element.setAttribute("data-gs-id", id);
       element.setAttribute("data-gs-key", id.replace(/[0-9]/g, ""));
       grid.makeWidget(element);
@@ -136,6 +137,7 @@ const Demo = () => {
       <Button type="primary" onClick={saveLayout}>
         保存布局
       </Button>
+      <Table />
       <div style={{ marginTop: "20px" }}>
         <div className={`grid-stack controlled`} id="grid1">
           {components.map((comp) => (
@@ -145,11 +147,12 @@ const Demo = () => {
               data-gs-key={comp.key}
               data-gs-x={comp.x}
               data-gs-y={comp.y}
-              data-gs-width={comp.w}
-              data-gs-height={comp.h}
+              gs-h={comp.h}
+              gs-w={comp.w}
               ref={refs.current[comp.id]}
               className="grid-stack-item"
             >
+              {/* {COMPONENTS[comp.key]} */}
               <div className="grid-stack-item-content">
                 {COMPONENTS[comp.key]}
               </div>
