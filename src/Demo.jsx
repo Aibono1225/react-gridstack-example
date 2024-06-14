@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, createRef } from "react";
 import { GridStack } from "gridstack";
+import { Button } from "antd";
 import A from "./components/A";
 import B from "./components/B";
 import C from "./components/C";
@@ -67,14 +68,28 @@ const Demo = () => {
     setComponents([...components, newComponent]);
   };
 
+  const saveLayout = () => {
+    const grid = gridRef.current;
+    const layout = grid.save();
+    localStorage.setItem("grid-layout", JSON.stringify(layout));
+  };
+
+  useEffect(() => {
+    const savedLayout = JSON.parse(localStorage.getItem("grid-layout"));
+    if (savedLayout) {
+      gridRef.current = GridStack.init(options1, "#grid1");
+      const grid = gridRef.current;
+      grid.load(savedLayout);
+      console.log("??", savedLayout);
+    }
+  }, []);
+
   useEffect(() => {
     if (!gridRef.current) {
       gridRef.current = GridStack.init(options1, "#grid1");
 
       // Add event listener for change
       gridRef.current.on("change", function (event, items) {
-        console.log("Changed items:", items);
-
         items.forEach((item) => {
           const { x, y, w, h } = item;
           console.log("??", item);
@@ -94,24 +109,35 @@ const Demo = () => {
     const grid = gridRef.current;
     grid.batchUpdate();
     grid.removeAll(false);
-    components.forEach(({ id }) => grid.makeWidget(refs.current[id].current));
+    components.forEach(({ id }) => {
+      const element = refs.current[id].current;
+      console.log("每个", element);
+      element.setAttribute("data-gs-id", id);
+      element.setAttribute("data-gs-key", id.replace(/[0-9]/g, ""));
+      grid.makeWidget(element);
+    });
     grid.batchUpdate(false);
   }, [components]);
 
   return (
     <div>
       <ComponentList onAddComponent={handleAddComponent} />
+      <Button type="primary" onClick={saveLayout}>
+        保存布局
+      </Button>
       <div style={{ marginTop: "20px" }}>
         <div className={`grid-stack controlled`} id="grid1">
           {components.map((comp) => (
             <div
               key={comp.id}
+              data-gs-id={comp.id}
+              data-gs-key={comp.key}
               data-gs-x={comp.x}
               data-gs-y={comp.y}
               data-gs-width={comp.w}
               data-gs-height={comp.h}
               ref={refs.current[comp.id]}
-              className={"grid-stack-item"}
+              className="grid-stack-item"
             >
               <div className="grid-stack-item-content">
                 {COMPONENTS[comp.key]}
