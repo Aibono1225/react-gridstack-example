@@ -1,8 +1,8 @@
-import React from "react";
+import React from 'react';
 
 const C = () => {
   return (
-    <div style={{ padding: "10px", backgroundColor: "lightcoral" }}>
+    <div style={{ height: '100%', backgroundColor: 'lightblue' }}>
       Component C
     </div>
   );
