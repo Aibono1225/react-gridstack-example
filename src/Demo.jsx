@@ -14,13 +14,6 @@ const COMPONENTS = {
   Table: <Table />,
 };
 
-const Item = ({ id, content }) => (
-  <div>
-    {id}
-    {content}
-  </div>
-);
-
 const ComponentList = ({ onAddComponent }) => {
   return (
     <table>
@@ -44,7 +37,6 @@ const ComponentList = ({ onAddComponent }) => {
 
 const Demo = () => {
   const [components, setComponents] = useState([]);
-  const [savedItems, setSavedItems] = useState([]);
   const refs = useRef({});
   const gridRef = useRef();
   const compRef = useRef();
@@ -72,7 +64,6 @@ const Demo = () => {
     dragOut: true,
     autoPosition: true,
     // sizeToContent: true,
-    // itemclassName: 'with-lines', // test a custom additional className #2110
     acceptWidgets: function (el) {
       return true;
     }, // function example, but can also be: true | false | '.someclassName' value
@@ -84,8 +75,9 @@ const Demo = () => {
       key: componentKey,
       x: 0,
       y: 0,
-      w: 1,
-      h: 1,
+      w: 4,
+      h: 2,
+      ratio: 2,
     };
     setComponents([...components, newComponent]);
     // setItems([...components, newComponent]);
@@ -142,34 +134,29 @@ const Demo = () => {
       gridRef.current = GridStack.init(options1, "#grid1");
       compRef.current = GridStack.init(options1, "#grid2");
 
-      gridRef.current.on("change", function (event, items) {
-        items.forEach((item) => {
-          const { x, y, w, h } = item;
-          console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
-        });
-
-        const allItems = gridRef.current.engine.nodes.map((node) => ({
-          x: node.x,
-          y: node.y,
-          w: node.w,
-          h: node.h,
-        }));
-        console.log("All items:", allItems);
+      gridRef.current.on("resize", function (event, el) {
+        const node = el.gridstackNode;
+        if (node) {
+          // const aspectRatio = 1;
+          const aspectRatio = el.getAttribute("data-ratio");
+          const newHeight = Math.round(node.w / aspectRatio);
+          gridRef.current.update(el, { h: newHeight });
+        }
       });
-      // .on("resize", function (event, el) {
-      //   const node = el.gridstackNode;
-      //   if (node) {
-      //     const aspectRatio = 1;
-      //     // const aspectRatio = node.el.getAttribute("ratio");
-      //     const newHeight = Math.round(node.w / aspectRatio);
-      //     gridRef.current.update(el, { h: newHeight });
-      //   }
-      // });
+
+      compRef.current.on("resize", function (event, el) {
+        const node = el.gridstackNode;
+        if (node) {
+          const aspectRatio = 1;
+          // const aspectRatio = node.el.getAttribute("ratio");
+          const newHeight = Math.round(node.w / aspectRatio);
+          gridRef.current.update(el, { h: newHeight });
+        }
+      });
     }
 
     const grid = compRef.current;
     grid.batchUpdate();
-    grid.margin(2);
     grid.removeAll(false);
     components.forEach(({ id, key, x, y, w, h }) => {
       const element = refs.current[id].current;
@@ -226,6 +213,7 @@ const Demo = () => {
               data-gs-y={comp.y}
               gs-h={comp.h}
               gs-w={comp.w}
+              data-ratio={comp.ratio}
               ref={refs.current[comp.id]}
               className="grid-stack-item"
             >
