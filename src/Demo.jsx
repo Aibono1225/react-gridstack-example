@@ -39,6 +39,7 @@ const Demo = () => {
   const [components, setComponents] = useState([]);
   const refs = useRef({});
   const gridRef = useRef();
+  const [hasSavedLayout, setHasSavedLayout] = useState(false);
 
   if (Object.keys(refs.current).length !== components.length) {
     components.forEach(({ id }) => {
@@ -85,6 +86,7 @@ const Demo = () => {
   useEffect(() => {
     const savedLayout = JSON.parse(localStorage.getItem("grid-layout"));
     if (savedLayout) {
+      setHasSavedLayout(true);
       gridRef.current = GridStack.init(options1, "#grid1");
       const grid = gridRef.current;
 
@@ -97,7 +99,7 @@ const Demo = () => {
         h: item.h,
       }));
 
-      console.log("??", restoredComponents);
+      console.log("restoredComponents:", restoredComponents);
       setComponents(restoredComponents);
 
       grid.load(savedLayout);
@@ -112,7 +114,6 @@ const Demo = () => {
       gridRef.current.on("change", function (event, items) {
         items.forEach((item) => {
           const { x, y, w, h } = item;
-          console.log("??", item);
           console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
         });
 
@@ -141,12 +142,15 @@ const Demo = () => {
     grid.removeAll(false);
     components.forEach(({ id, key, x, y, w, h }) => {
       const element = refs.current[id].current;
-      element.setAttribute("gs-id", id);
-      element.setAttribute("gs-key", key);
-      element.setAttribute("gs-x", x);
-      element.setAttribute("gs-y", y);
-      element.setAttribute("gs-w", w);
-      element.setAttribute("gs-h", h);
+      if (hasSavedLayout) {
+        element.setAttribute("gs-id", id);
+        element.setAttribute("gs-key", key);
+        element.setAttribute("gs-x", x);
+        element.setAttribute("gs-y", y);
+        element.setAttribute("gs-w", w);
+        element.setAttribute("gs-h", h);
+        setHasSavedLayout(false);
+      }
       grid.makeWidget(element);
     });
     grid.batchUpdate(false);

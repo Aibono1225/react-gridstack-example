@@ -27,7 +27,7 @@ h1 {
 
 .grid-stack-item-content {
   text-align: center;
-  background-color: #18bc9c;
+  /* background-color: #18bc9c; */
   overflow-y: auto !important;
   inset: 1px !important;
 }
