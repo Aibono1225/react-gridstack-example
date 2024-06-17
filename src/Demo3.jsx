@@ -1,30 +1,17 @@
-import React, { useState, useEffect, createRef, useRef } from "react";
+import React, { useState, useRef, useEffect, createRef } from "react";
 import { GridStack } from "gridstack";
+import { Button } from "antd";
 import A from "./components/A";
 import B from "./components/B";
 import C from "./components/C";
-import Table from "./components/table.jsx";
-import "gridstack/dist/gridstack.min.css";
+import Table from "./components/table";
 import "./demo.css";
-
-const Item = ({ content }) => <div>{content}</div>;
 
 const COMPONENTS = {
   A: <A />,
   B: <B />,
   C: <C />,
   Table: <Table />,
-};
-
-let options = {
-  minRow: 1, // don't collapse when empty
-  cellHeight: 70,
-  autoPosition: true,
-  float: true,
-  dragOut: true,
-  acceptWidgets: function (el) {
-    return true;
-  }, // function example, but can also be: true | false | '.someclassName' value
 };
 
 const ComponentList = ({ onAddComponent }) => {
@@ -48,95 +35,157 @@ const ComponentList = ({ onAddComponent }) => {
   );
 };
 
-const ControlledStack = ({ items, addItem }) => {
+const Demo = () => {
+  const [components, setComponents] = useState([]);
   const refs = useRef({});
   const gridRef = useRef();
+  const [hasSavedLayout, setHasSavedLayout] = useState(false);
 
-  if (Object.keys(refs.current).length !== items.length) {
-    items.forEach(({ id }) => {
+  if (Object.keys(refs.current).length !== components.length) {
+    components.forEach(({ id }) => {
       refs.current[id] = refs.current[id] || createRef();
     });
   }
 
-  useEffect(() => {
-    // gridRef.current =
-    //   gridRef.current || GridStack.init(options, "#grid1").load([...initItems]);
-    gridRef.current = gridRef.current || GridStack.init(options, "#grid1");
-
-    GridStack.setupDragIn(".sidebar .grid-stack-item", {
-      appendTo: ".controlled",
-    });
-    // gridRef.current = gridRef.current || GridStack.init();
-    const grid = gridRef.current;
-    grid.batchUpdate();
-    grid.removeAll(false);
-    items.forEach(({ id }) => grid.makeWidget(refs.current[id].current));
-    grid.batchUpdate(false);
-  }, [items]);
-
-  return (
-    <div>
-      <div className={`grid-stack controlled`} id="grid1">
-        {items.map((item, i) => {
-          return (
-            <div
-              ref={refs.current[item.id]}
-              key={item.id}
-              className={"grid-stack-item"}
-            >
-              <div className="grid-stack-item-content">
-                <Item {...item} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <br />
-    </div>
-  );
-};
-
-const Demo2 = () => {
-  // const [items, setItems] = useState([{ id: "item-1" }, { id: "item-2" }]);
-
-  const [items, setItems] = useState([
-    { x: 2, y: 3, w: 5, h: 2, id: "special", content: <Table /> },
-  ]);
-  const [components, setComponents] = useState([]);
-
-  const handleAddComponent = (componentKey) => {
-    console.log("??", componentKey);
-    // const newComponent = {
-    //   id: componentKey + components.length,
-    //   key: componentKey,
-    //   x: 0,
-    //   y: 0,
-    //   w: 1,
-    //   h: 1,
-    // };
-    // setComponents([...components, newComponent]);
+  let options1 = {
+    // column: 6,
+    minRow: 1, // don't collapse when empty
+    float: true,
+    dragOut: true,
+    autoPosition: true,
+    // sizeToContent: true,
+    // itemclassName: 'with-lines', // test a custom additional className #2110
+    acceptWidgets: function (el) {
+      return true;
+    }, // function example, but can also be: true | false | '.someclassName' value
   };
 
+  const handleAddComponent = (componentKey) => {
+    const newComponent = {
+      id: componentKey + components.length,
+      key: componentKey,
+      x: 0,
+      y: 0,
+      w: 1,
+      h: 1,
+    };
+    setComponents([...components, newComponent]);
+  };
+
+  const saveLayout = () => {
+    const grid = gridRef.current;
+    const layout = grid.save(false);
+    const extendedLayout = layout.map((item) => {
+      const component = components.find((comp) => comp.id === item.id);
+      return { ...item, componentKey: component.key };
+    });
+    localStorage.setItem("grid-layout", JSON.stringify(extendedLayout));
+  };
+
+  useEffect(() => {
+    const savedLayout = JSON.parse(localStorage.getItem("grid-layout"));
+    if (savedLayout) {
+      setHasSavedLayout(true);
+      gridRef.current = GridStack.init(options1, "#grid1");
+      const grid = gridRef.current;
+
+      const restoredComponents = savedLayout.map((item) => ({
+        id: item.id,
+        key: item.componentKey,
+        x: item.x,
+        y: item.y,
+        w: item.w,
+        h: item.h,
+      }));
+
+      console.log("restoredComponents:", restoredComponents);
+      setComponents(restoredComponents);
+
+      grid.load(savedLayout);
+      grid.batchUpdate();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!gridRef.current) {
+      gridRef.current = GridStack.init(options1, "#grid1");
+
+      gridRef.current.on("change", function (event, items) {
+        items.forEach((item) => {
+          const { x, y, w, h } = item;
+          console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
+        });
+
+        const allItems = gridRef.current.engine.nodes.map((node) => ({
+          x: node.x,
+          y: node.y,
+          w: node.w,
+          h: node.h,
+        }));
+        console.log("All items:", allItems);
+      });
+      // .on("resize", function (event, el) {
+      //   const node = el.gridstackNode;
+      //   if (node) {
+      //     const aspectRatio = 1;
+      //     // const aspectRatio = node.el.getAttribute("ratio");
+      //     const newHeight = Math.round(node.w / aspectRatio);
+      //     gridRef.current.update(el, { h: newHeight });
+      //   }
+      // });
+    }
+
+    const grid = gridRef.current;
+    grid.batchUpdate();
+    grid.margin(2);
+    grid.removeAll(false);
+    components.forEach(({ id, key, x, y, w, h }) => {
+      const element = refs.current[id].current;
+      if (hasSavedLayout) {
+        element.setAttribute("gs-id", id);
+        element.setAttribute("gs-key", key);
+        element.setAttribute("gs-x", x);
+        element.setAttribute("gs-y", y);
+        element.setAttribute("gs-w", w);
+        element.setAttribute("gs-h", h);
+        setHasSavedLayout(false);
+      }
+      grid.makeWidget(element);
+    });
+    grid.batchUpdate(false);
+  }, [components]);
+
   return (
     <div>
-      <h2>Demo3页</h2>
       <ComponentList onAddComponent={handleAddComponent} />
-      <div className="col-md-3">
-        <div className="sidebar">
-          <div className="grid-stack-item">
-            <div className="grid-stack-item-content"></div>
-          </div>
-          <div className="grid-stack-item" gs-w="2" gs-h="1" gs-max-w="3">
-            <div className="grid-stack-item-content">2x1, max=3</div>
-          </div>
+      <Button type="primary" onClick={saveLayout}>
+        保存布局
+      </Button>
+      <div style={{ marginTop: "20px" }}>
+        <div className={`grid-stack controlled`} id="grid1">
+          {components.map((comp) => (
+            <div
+              key={comp.id}
+              gs-id={comp.id}
+              data-gs-id={comp.id}
+              data-gs-key={comp.key}
+              data-gs-x={comp.x}
+              data-gs-y={comp.y}
+              gs-h={comp.h}
+              gs-w={comp.w}
+              ref={refs.current[comp.id]}
+              className="grid-stack-item"
+            >
+              {/* {COMPONENTS[comp.key]} */}
+              <div className="grid-stack-item-content">
+                {COMPONENTS[comp.key]}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      <ControlledStack
-        items={items}
-        addItem={() => setItems([...items, { id: `item-${items.length + 1}` }])}
-      />
     </div>
   );
 };
 
-export default Demo2;
+export default Demo;

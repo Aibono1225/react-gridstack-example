@@ -77,7 +77,6 @@ const Demo = () => {
     const layout = grid.save(false);
     const extendedLayout = layout.map((item) => {
       const component = components.find((comp) => comp.id === item.id);
-      console.log("但个", item, component);
       return { ...item, componentKey: component.key };
     });
     localStorage.setItem("grid-layout", JSON.stringify(extendedLayout));
