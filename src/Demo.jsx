@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect, createRef } from 'react';
-import { GridStack } from 'gridstack';
-import { Button } from 'antd';
-import A from './components/A';
-import B from './components/B';
-import C from './components/C';
-import Table from './components/table';
-import './demo.css';
+import React, { useState, useRef, useEffect, createRef } from "react";
+import { GridStack } from "gridstack";
+import { Button } from "antd";
+import A from "./components/A";
+import B from "./components/B";
+import C from "./components/C";
+import Table from "./components/table";
+import "./demo.css";
 
 const COMPONENTS = {
   A: <A />,
@@ -73,29 +73,46 @@ const Demo = () => {
 
   const saveLayout = () => {
     const grid = gridRef.current;
-    const layout = grid.save();
-    localStorage.setItem('grid-layout', JSON.stringify(layout));
+    const layout = grid.save(false);
+    const extendedLayout = layout.map((item) => {
+      const component = components.find((comp) => comp.id === item.id);
+      console.log("但个", item, component);
+      return { ...item, componentKey: component.key };
+    });
+    localStorage.setItem("grid-layout", JSON.stringify(extendedLayout));
   };
 
   useEffect(() => {
-    const savedLayout = JSON.parse(localStorage.getItem('grid-layout'));
+    const savedLayout = JSON.parse(localStorage.getItem("grid-layout"));
     if (savedLayout) {
-      gridRef.current = GridStack.init(options1, '#grid1');
+      gridRef.current = GridStack.init(options1, "#grid1");
       const grid = gridRef.current;
+
+      const restoredComponents = savedLayout.map((item) => ({
+        id: item.id,
+        key: item.componentKey,
+        x: item.x,
+        y: item.y,
+        w: item.w,
+        h: item.h,
+      }));
+
+      console.log("??", restoredComponents);
+      setComponents(restoredComponents);
+
       grid.load(savedLayout);
-      console.log('??', savedLayout);
       grid.batchUpdate();
     }
   }, []);
 
   useEffect(() => {
     if (!gridRef.current) {
-      gridRef.current = GridStack.init(options1, '#grid1');
+      gridRef.current = GridStack.init(options1, "#grid1");
 
-      gridRef.current.on('change', function (event, items) {
+      gridRef.current.on("change", function (event, items) {
         items.forEach((item) => {
           const { x, y, w, h } = item;
-          console.log('??', item);
+          console.log("??", item);
           console.log(`Dragged element: x=${x}, y=${y}, w=${w}, h=${h}`);
         });
 
@@ -105,7 +122,7 @@ const Demo = () => {
           w: node.w,
           h: node.h,
         }));
-        console.log('All items:', allItems);
+        console.log("All items:", allItems);
       });
       // .on("resize", function (event, el) {
       //   const node = el.gridstackNode;
@@ -122,10 +139,14 @@ const Demo = () => {
     grid.batchUpdate();
     grid.margin(2);
     grid.removeAll(false);
-    components.forEach(({ id }) => {
+    components.forEach(({ id, key, x, y, w, h }) => {
       const element = refs.current[id].current;
-      element.setAttribute('data-gs-id', id);
-      element.setAttribute('data-gs-key', id.replace(/[0-9]/g, ''));
+      element.setAttribute("gs-id", id);
+      element.setAttribute("gs-key", key);
+      element.setAttribute("gs-x", x);
+      element.setAttribute("gs-y", y);
+      element.setAttribute("gs-w", w);
+      element.setAttribute("gs-h", h);
       grid.makeWidget(element);
     });
     grid.batchUpdate(false);
@@ -137,12 +158,12 @@ const Demo = () => {
       <Button type="primary" onClick={saveLayout}>
         保存布局
       </Button>
-      <Table />
-      <div style={{ marginTop: '20px' }}>
+      <div style={{ marginTop: "20px" }}>
         <div className={`grid-stack controlled`} id="grid1">
           {components.map((comp) => (
             <div
               key={comp.id}
+              gs-id={comp.id}
               data-gs-id={comp.id}
               data-gs-key={comp.key}
               data-gs-x={comp.x}
