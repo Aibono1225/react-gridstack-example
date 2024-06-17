@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, createRef } from "react";
 import { GridStack } from "gridstack";
-import { Button } from "antd";
+import { Button, Drawer } from "antd";
 import A from "./components/A";
 import B from "./components/B";
 import C from "./components/C";
@@ -13,6 +13,13 @@ const COMPONENTS = {
   C: <C />,
   Table: <Table />,
 };
+
+const Item = ({ id, content }) => (
+  <div>
+    {id}
+    {content}
+  </div>
+);
 
 const ComponentList = ({ onAddComponent }) => {
   return (
@@ -37,9 +44,20 @@ const ComponentList = ({ onAddComponent }) => {
 
 const Demo = () => {
   const [components, setComponents] = useState([]);
+  const [savedItems, setSavedItems] = useState([]);
   const refs = useRef({});
   const gridRef = useRef();
+  const compRef = useRef();
   const [hasSavedLayout, setHasSavedLayout] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const showDrawer = () => {
+    setOpen(true);
+  };
+
+  const onClose = () => {
+    setOpen(false);
+  };
 
   if (Object.keys(refs.current).length !== components.length) {
     components.forEach(({ id }) => {
@@ -70,16 +88,27 @@ const Demo = () => {
       h: 1,
     };
     setComponents([...components, newComponent]);
+    // setItems([...components, newComponent]);
   };
 
   const saveLayout = () => {
     const grid = gridRef.current;
     const layout = grid.save(false);
+
     const extendedLayout = layout.map((item) => {
       const component = components.find((comp) => comp.id === item.id);
       return { ...item, componentKey: component.key };
     });
-    localStorage.setItem("grid-layout", JSON.stringify(extendedLayout));
+
+    const uniqueCompo = Array.from(
+      new Set(extendedLayout.map((item) => item.id))
+    ).map((id) => {
+      return extendedLayout.find((item) => item.id === id);
+    });
+
+    console.log("extendedLayout?", extendedLayout);
+    // localStorage.setItem("grid-layout", JSON.stringify(extendedLayout));
+    localStorage.setItem("grid-layout", JSON.stringify(uniqueCompo));
   };
 
   useEffect(() => {
@@ -87,6 +116,7 @@ const Demo = () => {
     if (savedLayout) {
       setHasSavedLayout(true);
       gridRef.current = GridStack.init(options1, "#grid1");
+      compRef.current = GridStack.init(options1, "#grid2");
       const grid = gridRef.current;
 
       const restoredComponents = savedLayout.map((item) => ({
@@ -99,9 +129,10 @@ const Demo = () => {
       }));
 
       console.log("restoredComponents:", restoredComponents);
+      // grid.load(savedLayout);
+      grid.batchUpdate();
       setComponents(restoredComponents);
 
-      grid.load(savedLayout);
       grid.batchUpdate();
     }
   }, []);
@@ -109,6 +140,7 @@ const Demo = () => {
   useEffect(() => {
     if (!gridRef.current) {
       gridRef.current = GridStack.init(options1, "#grid1");
+      compRef.current = GridStack.init(options1, "#grid2");
 
       gridRef.current.on("change", function (event, items) {
         items.forEach((item) => {
@@ -135,7 +167,7 @@ const Demo = () => {
       // });
     }
 
-    const grid = gridRef.current;
+    const grid = compRef.current;
     grid.batchUpdate();
     grid.margin(2);
     grid.removeAll(false);
@@ -149,6 +181,9 @@ const Demo = () => {
         element.setAttribute("gs-w", w);
         element.setAttribute("gs-h", h);
         setHasSavedLayout(false);
+        gridRef.current.addWidget(element);
+        // gridRef.current.makeWidget(element);
+        return;
       }
       grid.makeWidget(element);
     });
@@ -157,12 +192,30 @@ const Demo = () => {
 
   return (
     <div>
-      <ComponentList onAddComponent={handleAddComponent} />
-      <Button type="primary" onClick={saveLayout}>
+      <Button type="primary" onClick={showDrawer}>
+        添加组件
+      </Button>
+      <Button
+        type="primary"
+        onClick={saveLayout}
+        style={{ marginLeft: "20px" }}
+      >
         保存布局
       </Button>
+      <Drawer
+        title="Basic Drawer"
+        placement="right"
+        onClose={onClose}
+        open={open}
+        mask={false}
+      >
+        <ComponentList onAddComponent={handleAddComponent} />
+      </Drawer>
       <div style={{ marginTop: "20px" }}>
-        <div className={`grid-stack controlled`} id="grid1">
+        <div className={`grid-stack controlled`} id="grid1"></div>
+      </div>
+      <div style={{ marginTop: "20px" }}>
+        <div className={`grid-stack`} id="grid2">
           {components.map((comp) => (
             <div
               key={comp.id}
@@ -176,7 +229,6 @@ const Demo = () => {
               ref={refs.current[comp.id]}
               className="grid-stack-item"
             >
-              {/* {COMPONENTS[comp.key]} */}
               <div className="grid-stack-item-content">
                 {COMPONENTS[comp.key]}
               </div>

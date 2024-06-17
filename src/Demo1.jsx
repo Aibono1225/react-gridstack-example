@@ -57,10 +57,8 @@ const ControlledStack = ({ items, addItem }) => {
     // gridRef.current = gridRef.current || GridStack.init();
     const grid = gridRef.current;
     grid.on("dragstop", function () {
-      console.log("有吗el", grid);
       // let x = parseInt(grid.el.getAttribute("gs-x")) || 0;
       let x = grid.el.gridstackNode;
-      console.log("???", x);
     });
     const wuw = grid.getGridItems();
     grid.batchUpdate();
