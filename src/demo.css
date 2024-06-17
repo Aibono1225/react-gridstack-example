@@ -24,8 +24,12 @@ h1 {
   background: #fafad2;
 }
 
-#grid2 {
-  height: 200px !important;
+.demo#grid2 {
+  height: 20vh !important;
+  position: fixed;
+  width: 100%;
+  bottom: 0px;
+  background-color: #6fa8dc;
 }
 
 #grid1 {

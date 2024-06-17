@@ -75,8 +75,8 @@ const Demo = () => {
       key: componentKey,
       x: 0,
       y: 0,
-      w: 4,
-      h: 2,
+      w: 2,
+      h: 1,
       ratio: 2,
     };
     setComponents([...components, newComponent]);
@@ -89,7 +89,7 @@ const Demo = () => {
 
     const extendedLayout = layout.map((item) => {
       const component = components.find((comp) => comp.id === item.id);
-      return { ...item, componentKey: component.key };
+      return { ...item, componentKey: component.key, ratio: component.ratio };
     });
 
     const uniqueCompo = Array.from(
@@ -98,9 +98,35 @@ const Demo = () => {
       return extendedLayout.find((item) => item.id === id);
     });
 
-    console.log("extendedLayout?", extendedLayout);
     // localStorage.setItem("grid-layout", JSON.stringify(extendedLayout));
     localStorage.setItem("grid-layout", JSON.stringify(uniqueCompo));
+  };
+
+  const clearLayout = () => {
+    localStorage.removeItem("grid-layout");
+    window.location.reload();
+  };
+
+  const addResizeListener = () => {
+    if (gridRef.current && compRef.current) {
+      gridRef.current.on("resize", function (event, el) {
+        const node = el.gridstackNode;
+        if (node) {
+          const aspectRatio = el.getAttribute("data-ratio");
+          const newHeight = Math.round(node.w / aspectRatio);
+          gridRef.current.update(el, { h: newHeight });
+        }
+      });
+
+      compRef.current.on("resize", function (event, el) {
+        const node = el.gridstackNode;
+        if (node) {
+          const aspectRatio = el.getAttribute("data-ratio");
+          const newHeight = Math.round(node.w / aspectRatio);
+          gridRef.current.update(el, { h: newHeight });
+        }
+      });
+    }
   };
 
   useEffect(() => {
@@ -118,10 +144,12 @@ const Demo = () => {
         y: item.y,
         w: item.w,
         h: item.h,
+        ratio: item.ratio,
       }));
 
       console.log("restoredComponents:", restoredComponents);
       // grid.load(savedLayout);
+      addResizeListener();
       grid.batchUpdate();
       setComponents(restoredComponents);
 
@@ -134,25 +162,7 @@ const Demo = () => {
       gridRef.current = GridStack.init(options1, "#grid1");
       compRef.current = GridStack.init(options1, "#grid2");
 
-      gridRef.current.on("resize", function (event, el) {
-        const node = el.gridstackNode;
-        if (node) {
-          // const aspectRatio = 1;
-          const aspectRatio = el.getAttribute("data-ratio");
-          const newHeight = Math.round(node.w / aspectRatio);
-          gridRef.current.update(el, { h: newHeight });
-        }
-      });
-
-      compRef.current.on("resize", function (event, el) {
-        const node = el.gridstackNode;
-        if (node) {
-          const aspectRatio = 1;
-          // const aspectRatio = node.el.getAttribute("ratio");
-          const newHeight = Math.round(node.w / aspectRatio);
-          gridRef.current.update(el, { h: newHeight });
-        }
-      });
+      addResizeListener();
     }
 
     const grid = compRef.current;
@@ -189,6 +199,13 @@ const Demo = () => {
       >
         保存布局
       </Button>
+      <Button
+        type="primary"
+        onClick={clearLayout}
+        style={{ marginLeft: "20px" }}
+      >
+        清空已保存的布局
+      </Button>
       <Drawer
         title="Basic Drawer"
         placement="right"
@@ -201,8 +218,9 @@ const Demo = () => {
       <div style={{ marginTop: "20px" }}>
         <div className={`grid-stack controlled`} id="grid1"></div>
       </div>
-      <div style={{ marginTop: "20px" }}>
-        <div className={`grid-stack`} id="grid2">
+      <br />
+      <div>
+        <div className={`grid-stack demo`} id="grid2">
           {components.map((comp) => (
             <div
               key={comp.id}

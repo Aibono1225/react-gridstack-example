@@ -60,11 +60,9 @@ const ControlledStack = ({ items, addItem }) => {
       // let x = parseInt(grid.el.getAttribute("gs-x")) || 0;
       let x = grid.el.gridstackNode;
     });
-    const wuw = grid.getGridItems();
     grid.batchUpdate();
     grid.removeAll(false);
     items.forEach(({ id }) => grid.makeWidget(refs.current[id].current));
-    console.log("??", wuw);
     grid.batchUpdate(false);
   }, [items]);
 
