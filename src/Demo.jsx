@@ -80,7 +80,6 @@ const Demo = () => {
       ratio: 2,
     };
     setComponents([...components, newComponent]);
-    // setItems([...components, newComponent]);
   };
 
   const saveLayout = () => {
@@ -182,8 +181,14 @@ const Demo = () => {
         // gridRef.current.makeWidget(element);
         return;
       }
-      grid.makeWidget(element);
+      // grid.makeWidget(element);
     });
+    const allCompItem = compRef.current.getGridItems();
+
+    allCompItem.forEach((comp) => {
+      grid.makeWidget(comp);
+    });
+
     grid.batchUpdate(false);
   }, [components]);
 
