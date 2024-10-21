@@ -1,4 +1,6 @@
 import Login from "../Login.jsx";
+import NewLogin from "../NewLogin.jsx";
+import Callback from "../Callback.jsx";
 import Demo from "../Demo.jsx";
 import Demo1 from "../Demo1.jsx";
 import Demo2 from "../Demo2.jsx";
@@ -24,6 +26,14 @@ const routes = [
   {
     path: "/demo3",
     element: <Demo3 />,
+  },
+  {
+    path: "/newlogin",
+    element: <NewLogin />,
+  },
+  {
+    path: "/callback",
+    element: <Callback />,
   },
 ];
 
